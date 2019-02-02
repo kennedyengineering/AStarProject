@@ -1,7 +1,5 @@
 import pygame
 from pygame.locals import *
-#from queue import Queue
-import time
 
 width, height = 400, 300
 
