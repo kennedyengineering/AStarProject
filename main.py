@@ -20,7 +20,7 @@ class AStar: # A-Star algorithm class, for 4 way graph traversal
 
     @staticmethod
     def manhattan(P, Q):  # calculates manhattan, AKA taxicab, distance between two dimensional vectors P and Q
-        return abs(P[0]-Q[1]) + abs(P[1]-Q[1])
+        return abs(P[0]-Q[0]) + abs(P[1]-Q[1])
 
     def cost(self, node):  # calculate the travel cost of the current node to the start node AKA g(n)
         total = 0
@@ -341,6 +341,8 @@ def main():  # setup and execute the algorithm
             graph.highlightNodeNode(node, color = (100, 100, 255))
         for node in astar.closedSet:
             graph.highlightNodeNode(node, color = (255, 100, 100))
+
+    print(len(astar.openSet) + len(astar.closedSet))
 
     while True:                                     # rendering loop, maintain the display window
         for event in pygame.event.get():
