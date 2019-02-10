@@ -3,6 +3,8 @@
 import pygame                                       # graphics library for rendering
 from pygame.locals import *                         # utilities for the graphics library
 from dpmap import *                                 # organized data, collected
+import matplotlib.pyplot as plt
+import numpy as np
 
 offset = 10                                         # offset from edge of screen, in pixels
 nodeSize = 8                                        # size of each node, in pixels
@@ -91,6 +93,8 @@ class AStar: # A-Star algorithm class, for 4 way graph traversal
             while parentNode != self.graph.startNode:
                 self.graph.highlightNode(parentNode.coordinates)
                 parentNode = parentNode.parent
+
+            return self.cost(bestNode)
 
 
 class Graph:  # graph class emulates a real graph by handing and rendering nodes and their relations with other nodes
@@ -281,7 +285,8 @@ def demo():  # setup and execute the algorithm
         graph.addWall(wall)
 
     astar = AStar(graph)                            # use the graph for A-STAR algorithm
-    astar.magic()                                   # run the algorithm for a solution
+    cost = astar.magic()                                   # run the algorithm for a solution
+    print(cost)
 
     while True:                                     # rendering loop, maintain the display window
         for event in pygame.event.get():
@@ -294,7 +299,7 @@ def demo():  # setup and execute the algorithm
         clock.tick(30)
 
 
-def main():  # setup and execute the algorithm
+def demo2():  # setup and execute the algorithm
     pygame.init()                                   # setup the graphics library for rendering
     clock = pygame.time.Clock()
     displaysurface = pygame.display.set_mode((width, height))
@@ -333,7 +338,8 @@ def main():  # setup and execute the algorithm
             graph.addWall(coordinate)
 
     astar = AStar(graph)                            # use the graph for A-STAR algorithm
-    astar.magic()                                   # run the algorithm for a solution
+    cost = astar.magic()                                   # run the algorithm for a solution
+    print(cost)
 
     if False:                                       # select True/False to display nodes examined instead of optimal path
         for node in astar.openSet:
@@ -355,5 +361,121 @@ def main():  # setup and execute the algorithm
         clock.tick(30)
 
 
-#demo()                                              # start the demo
+def main():  # setup and execute the algorithm
+
+    pygame.init()  # setup the graphics library for rendering
+    displaysurface = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("A* Search Algorithm")
+
+    background = pygame.image.load("dpmap grid overlay.png")  # prepare the background image for the display
+    background = pygame.transform.scale(background, (width - (2 * offset), height - (2 * offset)))
+
+    numNodesX = MAPSIZE[0]                             # define the number of nodes on the graph in the x direction
+    numNodesY = MAPSIZE[1]                             # define the number of nodes on the graph in the y direction
+
+    trials = 50
+    nodesExamined = []
+    distanceTraveled = []
+    trial = 0
+    while trial < trials:
+
+        goodPoints = False
+        while not goodPoints:
+            check = False
+            startX, startY = np.random.random_integers(0,numNodesX), np.random.random_integers(0,numNodesY)
+
+            for building in DPMAP:
+                x = DPMAP[building][0]
+                y = DPMAP[building][1]
+                w = DPMAP[building][2]
+                h = DPMAP[building][3]
+
+                if x <= startX <= x+w and y+h >= startY >= y:  # true if inside rectangle
+                    check = False
+                    break
+                else:
+                    check = True
+
+            if check:
+                goodPoints = True
+        goodPoints = False
+        while not goodPoints:
+            check, check1 = False, False
+            endX, endY = np.random.random_integers(0, numNodesX), np.random.random_integers(0, numNodesY)
+
+            for building in DPMAP:
+                x = DPMAP[building][0]
+                y = DPMAP[building][1]
+                w = DPMAP[building][2]
+                h = DPMAP[building][3]
+
+                if x <= endX <= x + w and y + h >= endY >= y:  # true if inside rectangle
+                    check = False
+                    break
+                else:
+                    check = True
+
+            if endX==startX and endY==startY:
+                check1 = False
+            else:
+                check1 = True
+
+            if check and check1:
+                goodPoints = True
+
+        goal = Goal((endX, endY))                       # define the goal node
+        start = Start((startX, startY))                  # define the start node
+        graph = Graph(numNodesX, numNodesY, nodeSize, displaysurface, goal, start)               # define the graph
+        for building in DPMAP:                    # define the obstacles on the graph
+            x = DPMAP[building][0]
+            y = DPMAP[building][1]
+            w = DPMAP[building][2]
+            h = DPMAP[building][3]
+
+            coordinateList = []
+            for i in range(w+1):
+                for ii in range(h+1):
+                    coordinateList.append((x+i,y+ii))
+
+            '''
+            coordinateList = []
+            for i in range(0, h):
+                # i -> y
+                coordinateList.append((x, y+i))
+            for i in range(0, w):
+                # i -> x
+                coordinateList.append((x+i,y+h))
+            for i in range(0, h):
+                # i -> y
+                coordinateList.append((x+w,y+i))
+            for i in range(0, w):
+                # i -> x
+                coordinateList.append((x+i,y))
+            coordinateList.append((x+w,y+h))
+            '''
+
+            for coordinate in coordinateList:
+                graph.addWall(coordinate)
+
+        astar = AStar(graph)                            # use the graph for A-STAR algorithm
+        cost = astar.magic()                                   # run the algorithm for a solution
+
+        if cost != None:
+            nodesExamined.append(len(astar.openSet) + len(astar.closedSet))
+            distanceTraveled.append(cost)
+            trial += 1
+        else:
+            print("retrying")
+
+        print(trial)
+
+        displaysurface.blit(background, (offset, offset))
+        graph.render()
+        pygame.display.update()
+
+    plt.scatter(nodesExamined, distanceTraveled)
+    plt.show()
+
+# demo()                                              # start the demo
+# demo2()                                             # start the second demo
 main()                                               # run the main program
