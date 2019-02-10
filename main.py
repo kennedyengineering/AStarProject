@@ -2,9 +2,12 @@
 
 import pygame                                       # graphics library for rendering
 from pygame.locals import *
+from dpmap import *
+import matplotlib as mp
 
-
-width, height = 400, 300                            # width and height of the display window
+offset = 10
+nodeSize = 8
+width, height = (MAPSIZE[0]*nodeSize)+(2*offset), (MAPSIZE[1]*nodeSize)+(2*offset)                           # width and height of the display window
 
 
 class AStar: # A-Star algorithm class, for 4 way graph traversal
@@ -129,7 +132,7 @@ class Graph:  # graph class emulates a real graph by handing and rendering nodes
                 if i+1 != numNodesY:
                     node.down = self.nodeArray[i+1][ii]
 
-    def highlightNode(self, coordinates):  # highlight a specific node on the graph identified by its coordinates
+    def highlightNode(self, coordinates, color = (255, 255, 255)):  # highlight a specific node on the graph identified by its coordinates
         theNode = None
         searchDone = False
         for array in self.nodeArray:
@@ -147,11 +150,20 @@ class Graph:  # graph class emulates a real graph by handing and rendering nodes
         else:
             try:
                 theNode.fill = True
+                theNode.fillColor = color
             except:
                 pass
 
+    def highlightNodeNode(self, node, color = (255, 255, 255)):
+        try:
+            node.fill = True
+            node.fillColor = color
+        except:
+            pass
+
     def render(self):  # render the graph and nodes
-        X, Y = 30,30                                # offset from window edge
+        global offset
+        X, Y = offset, offset                                # offset from window edge
 
         for i in range(0, len(self.nodeArray)):
             for node in self.nodeArray[i]:
@@ -160,14 +172,16 @@ class Graph:  # graph class emulates a real graph by handing and rendering nodes
                 elif node == self.startNode:
                     pygame.draw.rect(self.surface, (0, 255, 0), [X, Y, self.nodeSize, self.nodeSize])
                 elif node.isWall:
+                    #pass
                     pygame.draw.rect(self.surface, (100, 100, 100), [X, Y, self.nodeSize, self.nodeSize])
                 elif node.fill:
-                    pygame.draw.rect(self.surface, (255,255,255), [X, Y, self.nodeSize, self.nodeSize])
+                    pygame.draw.rect(self.surface, node.fillColor, [X, Y, self.nodeSize, self.nodeSize])
                 else:
-                    pygame.draw.rect(self.surface, (255,255,255), [X, Y, self.nodeSize, self.nodeSize], 1) 
+                    pass
+                    #pygame.draw.rect(self.surface, (255,255,255), [X, Y, self.nodeSize, self.nodeSize], 1)
                 X += self.nodeSize
             Y += self.nodeSize
-            X = 30
+            X = offset
 
     def addWall(self, coordinates):  # add an obstacle to the graph. Nodes do not interact with walls
         theNode = None
@@ -212,6 +226,7 @@ class Node:  # node class. contains common attributes that all entities on the g
         self.down = None                            # node below this node
         self.coordinates = coordinates              # nodes coordinates on the graph
         self.fill = False                           # determine if node is to be drawn filled in or not
+        self.fillColor = (255, 255, 255)
         self.parent = None                          # parent of the node
         self.isWall = False                         # determine if node is an obstacle or not
         self.weight = 1                             # travel weight from this node to its parent
@@ -243,7 +258,7 @@ class Start(Node):  # start node class. a different type of node representing th
         self.parent = self
 
 
-def main():  # setup and execute the algorithm
+def demo():  # setup and execute the algorithm
     pygame.init()                                   # setup the graphics library for rendering
     clock = pygame.time.Clock()
     displaysurface = pygame.display.set_mode((width, height))
@@ -251,18 +266,18 @@ def main():  # setup and execute the algorithm
 
     # coordinates start at 0 E.X.: 1 --> 2, 7 --> 8
     wallCoordinates = [                             # define the locations of obstacles, coordinates
-                       (4,1),
-                       (4,2),
-                       (4,3),
-                       (4,4),
-                       (4,5),
-                       (4,6),
-                       (4,7)]
+                       (4, 1), (5, 1), (6, 1), (7, 1), (8, 1), (9, 1), (10, 1),
+                       (4, 2),
+                       (4, 3),
+                       (4, 4),
+                       (4, 5),
+                       (4, 6),
+                       (4, 7)]
     numNodesX = 34                                  # define the number of nodes on the graph in the x direction
     numNodesY = 24                                  # define the number of nodes on the graph in the y direction
-    goal = Goal((2,3))                              # define the goal node
-    start = Start((6,7))                            # define the start node
-    graph = Graph(numNodesX,numNodesY,10,displaysurface, goal, start)               # define the graph
+    goal = Goal((3,0))                              # define the goal node
+    start = Start((10,7))                            # define the start node
+    graph = Graph(numNodesX, numNodesY, 10, displaysurface, goal, start)               # define the graph
     for wall in wallCoordinates:                    # define the obstacles on the graph
         graph.addWall(wall)
 
@@ -280,4 +295,64 @@ def main():  # setup and execute the algorithm
         clock.tick(30)
 
 
-main()                                              # start the program
+def main():  # setup and execute the algorithm
+    pygame.init()                                   # setup the graphics library for rendering
+    clock = pygame.time.Clock()
+    displaysurface = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("A* Search Algorithm")
+
+    background = pygame.image.load("dpmap grid overlay.png")
+    background = pygame.transform.scale(background, (width-(2*offset), height-(2*offset)))
+
+    numNodesX = MAPSIZE[0]                             # define the number of nodes on the graph in the x direction
+    numNodesY = MAPSIZE[1]                              # define the number of nodes on the graph in the y direction
+    goal = Goal(CLASSES["MATH"])                              # define the goal node
+    start = Start(CLASSES["ENGLISH"])                            # define the start node
+    graph = Graph(numNodesX, numNodesY, nodeSize, displaysurface, goal, start)               # define the graph
+    for building in DPMAP:                    # define the obstacles on the graph
+        x = DPMAP[building][0]
+        y = DPMAP[building][1]
+        w = DPMAP[building][2]
+        h = DPMAP[building][3]
+
+        coordinateList = []
+        for i in range(0, h):
+            # i -> y
+            coordinateList.append((x, y+i))
+        for i in range(0, w):
+            # i -> x
+            coordinateList.append((x+i,y+h))
+        for i in range(0, h):
+            # i -> y
+            coordinateList.append((x+w,y+i))
+        for i in range(0, w):
+            # i -> x
+            coordinateList.append((x+i,y))
+        coordinateList.append((x+w,y+h))
+
+        for coordinate in coordinateList:
+            graph.addWall(coordinate)
+
+    astar = AStar(graph)                            # use the graph for A-STAR algorithm
+    astar.magic()                                   # run the algorithm for a solution
+
+    if False:
+        for node in astar.openSet:
+            graph.highlightNodeNode(node, color = (100, 100, 255))
+        for node in astar.closedSet:
+            graph.highlightNodeNode(node, color = (255, 100, 100))
+
+    while True:                                     # rendering loop, maintain the display window
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                exit()
+
+        displaysurface.blit(background, (offset, offset))
+        graph.render()
+        pygame.display.update()
+        clock.tick(30)
+
+
+#demo()                                              # start the demo
+main()                                               # run the main program
