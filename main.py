@@ -5,6 +5,7 @@ from pygame.locals import *                         # utilities for the graphics
 from dpmap import *                                 # organized data, collected
 import matplotlib.pyplot as plt
 import numpy as np
+import time
 
 offset = 10                                         # offset from edge of screen, in pixels
 nodeSize = 8                                        # size of each node, in pixels
@@ -362,7 +363,6 @@ def demo2():  # setup and execute the algorithm
 
 
 def main():  # setup and execute the algorithm
-
     pygame.init()  # setup the graphics library for rendering
     displaysurface = pygame.display.set_mode((width, height))
     pygame.display.set_caption("A* Search Algorithm")
@@ -373,10 +373,13 @@ def main():  # setup and execute the algorithm
     numNodesX = MAPSIZE[0]                             # define the number of nodes on the graph in the x direction
     numNodesY = MAPSIZE[1]                             # define the number of nodes on the graph in the y direction
 
-    trials = 50
+    trials = 8000
     nodesExamined = []
     distanceTraveled = []
     trial = 0
+
+    startTime = time.time()
+
     while trial < trials:
 
         goodPoints = False
@@ -473,8 +476,31 @@ def main():  # setup and execute the algorithm
         graph.render()
         pygame.display.update()
 
+    plt.subplot(2, 1, 1)
     plt.scatter(nodesExamined, distanceTraveled)
+    plt.title("Simulation results, " + str(trials) + " iterations")
+    plt.xlabel("Quantity of nodes examined")
+    plt.ylabel("Cost of optimal path")
+
+    distanceTraveledMeters = []
+    for cost in distanceTraveled:
+        distanceTraveledMeters.append(cost*4)
+
+    areaExamined = []
+    for node in nodesExamined:
+        areaExamined.append(node*16)
+
+    plt.subplot(2, 1, 2)
+    plt.scatter(areaExamined, distanceTraveledMeters)
+    plt.xlabel("Area examined (M^2)")
+    plt.ylabel("Distance (M)")
+
+    endTime = time.time() - startTime
+    print("Time: ", endTime, " seconds")
+
     plt.show()
+    pygame.quit()
+    exit()
 
 # demo()                                              # start the demo
 # demo2()                                             # start the second demo
