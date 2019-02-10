@@ -1,13 +1,12 @@
-# By Braedan Kennedy
+# By Braedan Kennedy 2019
 
 import pygame                                       # graphics library for rendering
-from pygame.locals import *
-from dpmap import *
-import matplotlib as mp
+from pygame.locals import *                         # utilities for the graphics library
+from dpmap import *                                 # organized data, collected
 
-offset = 10
-nodeSize = 8
-width, height = (MAPSIZE[0]*nodeSize)+(2*offset), (MAPSIZE[1]*nodeSize)+(2*offset)                           # width and height of the display window
+offset = 10                                         # offset from edge of screen, in pixels
+nodeSize = 8                                        # size of each node, in pixels
+width, height = (MAPSIZE[0]*nodeSize)+(2*offset), (MAPSIZE[1]*nodeSize)+(2*offset)              # width and height of the display window
 
 
 class AStar: # A-Star algorithm class, for 4 way graph traversal
@@ -46,7 +45,7 @@ class AStar: # A-Star algorithm class, for 4 way graph traversal
 
             if len(evaluations) == 0:               # if no more nodes are available to examine there is no solution
                 self.finished = True
-            else:
+            else:                                   # if there are more nodes available then there is a solution, find it
                 bestEvaluation = evaluations[0]
                 for evaluation in evaluations:      # find best evaluation
                     if evaluation < bestEvaluation:
@@ -301,13 +300,13 @@ def main():  # setup and execute the algorithm
     displaysurface = pygame.display.set_mode((width, height))
     pygame.display.set_caption("A* Search Algorithm")
 
-    background = pygame.image.load("dpmap grid overlay.png")
+    background = pygame.image.load("dpmap grid overlay.png")    # prepare the background image for the display
     background = pygame.transform.scale(background, (width-(2*offset), height-(2*offset)))
 
     numNodesX = MAPSIZE[0]                             # define the number of nodes on the graph in the x direction
-    numNodesY = MAPSIZE[1]                              # define the number of nodes on the graph in the y direction
-    goal = Goal(CLASSES["MATH"])                              # define the goal node
-    start = Start(CLASSES["ENGLISH"])                            # define the start node
+    numNodesY = MAPSIZE[1]                             # define the number of nodes on the graph in the y direction
+    goal = Goal(CLASSES["MATH"])                       # define the goal node
+    start = Start(CLASSES["ENGLISH"])                  # define the start node
     graph = Graph(numNodesX, numNodesY, nodeSize, displaysurface, goal, start)               # define the graph
     for building in DPMAP:                    # define the obstacles on the graph
         x = DPMAP[building][0]
@@ -336,13 +335,13 @@ def main():  # setup and execute the algorithm
     astar = AStar(graph)                            # use the graph for A-STAR algorithm
     astar.magic()                                   # run the algorithm for a solution
 
-    if False:
+    if False:                                       # select True/False to display nodes examined instead of optimal path
         for node in astar.openSet:
             graph.highlightNodeNode(node, color = (100, 100, 255))
         for node in astar.closedSet:
             graph.highlightNodeNode(node, color = (255, 100, 100))
 
-    print(len(astar.openSet) + len(astar.closedSet))
+    print(len(astar.openSet) + len(astar.closedSet))        # print out number of nodes examined
 
     while True:                                     # rendering loop, maintain the display window
         for event in pygame.event.get():
