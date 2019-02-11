@@ -6,6 +6,7 @@ from dpmap import *                                 # organized data, collected
 import matplotlib.pyplot as plt
 import numpy as np
 import time
+from scipy import optimize as opt
 
 offset = 10                                         # offset from edge of screen, in pixels
 nodeSize = 8                                        # size of each node, in pixels
@@ -373,7 +374,7 @@ def main():  # setup and execute the algorithm
     numNodesX = MAPSIZE[0]                             # define the number of nodes on the graph in the x direction
     numNodesY = MAPSIZE[1]                             # define the number of nodes on the graph in the y direction
 
-    trials = 8000
+    trials = 50
     nodesExamined = []
     distanceTraveled = []
     trial = 0
@@ -381,11 +382,10 @@ def main():  # setup and execute the algorithm
     startTime = time.time()
 
     while trial < trials:
-
         goodPoints = False
         while not goodPoints:
             check = False
-            startX, startY = np.random.random_integers(0,numNodesX), np.random.random_integers(0,numNodesY)
+            startX, startY = np.random.random_integers(0, numNodesX), np.random.random_integers(0,numNodesY)
 
             for building in DPMAP:
                 x = DPMAP[building][0]
@@ -467,20 +467,25 @@ def main():  # setup and execute the algorithm
             nodesExamined.append(len(astar.openSet) + len(astar.closedSet))
             distanceTraveled.append(cost)
             trial += 1
+            displaysurface.blit(background, (offset, offset))
+            graph.render()
+            pygame.display.update()
         else:
             print("retrying")
 
+        for node in astar.openSet:
+            graph.highlightNodeNode(node, color = (100, 100, 255))
+        for node in astar.closedSet:
+            graph.highlightNodeNode(node, color = (255, 100, 100))
+
         print(trial)
 
-        displaysurface.blit(background, (offset, offset))
-        graph.render()
-        pygame.display.update()
 
     plt.subplot(2, 1, 1)
-    plt.scatter(nodesExamined, distanceTraveled)
+    plt.scatter(distanceTraveled, nodesExamined)
     plt.title("Simulation results, " + str(trials) + " iterations")
-    plt.xlabel("Quantity of nodes examined")
-    plt.ylabel("Cost of optimal path")
+    plt.ylabel("Quantity of nodes examined")
+    plt.xlabel("Cost of optimal path")
 
     distanceTraveledMeters = []
     for cost in distanceTraveled:
@@ -490,10 +495,25 @@ def main():  # setup and execute the algorithm
     for node in nodesExamined:
         areaExamined.append(node*16)
 
+    areaExamined = np.asarray(areaExamined)
+    distanceTraveledMeters = np.asarray(distanceTraveledMeters)
+
     plt.subplot(2, 1, 2)
-    plt.scatter(areaExamined, distanceTraveledMeters)
-    plt.xlabel("Area examined (M^2)")
-    plt.ylabel("Distance (M)")
+    plt.scatter(distanceTraveledMeters, areaExamined)
+    plt.ylabel("Area examined (M^2)")
+    plt.xlabel("Distance (M)")
+
+    # popt, pcov = opt.curve_fit(lambda t,a,b:a*np.exp(b*t), distanceTraveledMeters, areaExamined, p0=(4, 0.1), maxfev=100000)
+    # popt, pcov = opt.curve_fit(lambda t,a,b:np.multiply(a,np.power(b,t)), distanceTraveledMeters, areaExamined, p0=(1.4,1.0))
+    popt, pcov = opt.curve_fit(lambda t,a,b:a*(b**t), distanceTraveledMeters, areaExamined, p0=(1.4,1.0))
+    print(popt)
+    print(pcov)
+    x = np.array(range(distanceTraveledMeters.min(), distanceTraveledMeters.max()))
+    # y = popt[0]*np.exp(popt[1]*x)
+    # y = np.multiply(popt[0], np.power(popt[1],x))
+    y = popt[0]*(popt[1]**x)
+
+    plt.plot(x,y,'g')
 
     endTime = time.time() - startTime
     print("Time: ", endTime, " seconds")
