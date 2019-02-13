@@ -374,7 +374,7 @@ def main():  # setup and execute the algorithm
     numNodesX = MAPSIZE[0]                             # define the number of nodes on the graph in the x direction
     numNodesY = MAPSIZE[1]                             # define the number of nodes on the graph in the y direction
 
-    trials = 50
+    trials = 10000
     nodesExamined = []
     distanceTraveled = []
     trial = 0
@@ -468,24 +468,26 @@ def main():  # setup and execute the algorithm
             distanceTraveled.append(cost)
             trial += 1
             displaysurface.blit(background, (offset, offset))
+            for node in astar.openSet:
+                graph.highlightNodeNode(node, color=(100, 100, 255))
+            for node in astar.closedSet:
+                graph.highlightNodeNode(node, color=(255, 100, 100))
             graph.render()
             pygame.display.update()
         else:
             print("retrying")
 
-        for node in astar.openSet:
-            graph.highlightNodeNode(node, color = (100, 100, 255))
-        for node in astar.closedSet:
-            graph.highlightNodeNode(node, color = (255, 100, 100))
-
         print(trial)
 
+    isPlot = False
 
-    plt.subplot(2, 1, 1)
-    plt.scatter(distanceTraveled, nodesExamined)
-    plt.title("Simulation results, " + str(trials) + " iterations")
-    plt.ylabel("Quantity of nodes examined")
-    plt.xlabel("Cost of optimal path")
+    if isPlot:
+        plt.subplot(2, 1, 1)
+        plt.scatter(distanceTraveled, nodesExamined)
+        plt.title("Simulation results, " + str(trials) + " iterations")
+        plt.ylabel("Quantity of nodes examined")
+        plt.xlabel("Cost of optimal path")
+
 
     distanceTraveledMeters = []
     for cost in distanceTraveled:
@@ -498,22 +500,24 @@ def main():  # setup and execute the algorithm
     areaExamined = np.asarray(areaExamined)
     distanceTraveledMeters = np.asarray(distanceTraveledMeters)
 
-    plt.subplot(2, 1, 2)
-    plt.scatter(distanceTraveledMeters, areaExamined)
-    plt.ylabel("Area examined (M^2)")
-    plt.xlabel("Distance (M)")
+    if isPlot:
+        plt.subplot(2, 1, 2)
+        plt.scatter(distanceTraveledMeters, areaExamined)
+        plt.ylabel("Area examined (M^2)")
+        plt.xlabel("Distance (M)")
 
-    # popt, pcov = opt.curve_fit(lambda t,a,b:a*np.exp(b*t), distanceTraveledMeters, areaExamined, p0=(4, 0.1), maxfev=100000)
-    # popt, pcov = opt.curve_fit(lambda t,a,b:np.multiply(a,np.power(b,t)), distanceTraveledMeters, areaExamined, p0=(1.4,1.0))
-    popt, pcov = opt.curve_fit(lambda t,a,b:a*(b**t), distanceTraveledMeters, areaExamined, p0=(1.4,1.0))
-    print(popt)
-    print(pcov)
-    x = np.array(range(distanceTraveledMeters.min(), distanceTraveledMeters.max()))
-    # y = popt[0]*np.exp(popt[1]*x)
-    # y = np.multiply(popt[0], np.power(popt[1],x))
-    y = popt[0]*(popt[1]**x)
+        # popt, pcov = opt.curve_fit(lambda t,a,b:a*np.exp(b*t), distanceTraveledMeters, areaExamined, p0=(4, 0.1), maxfev=100000)
+        # popt, pcov = opt.curve_fit(lambda t,a,b:np.multiply(a,np.power(b,t)), distanceTraveledMeters, areaExamined, p0=(1.4,1.0))
+        popt, pcov = opt.curve_fit(lambda t,a,b:a*(b**t), distanceTraveledMeters, areaExamined, p0=(1.4,1.0))
+        print(popt)
+        print(pcov)
+        x = np.array(range(distanceTraveledMeters.min(), distanceTraveledMeters.max()))
+        # y = popt[0]*np.exp(popt[1]*x)
+        # y = np.multiply(popt[0], np.power(popt[1],x))
+        y = popt[0]*(popt[1]**x)
+        plt.plot(x,y,'g')
 
-    plt.plot(x,y,'g')
+    np.savetxt('/home/braedan/Desktop/IA src/data.csv', np.c_[distanceTraveledMeters,areaExamined])
 
     endTime = time.time() - startTime
     print("Time: ", endTime, " seconds")
